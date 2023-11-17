@@ -2,7 +2,6 @@
     <script>
         //VARIABLES
         var clientName = '';
-        var System = null;
         var WAITING_FOR_START = false;
     </script>
 
@@ -16,6 +15,10 @@
 
     <body>
         <div id="game_container">
+            <div id="name_div">
+                <h1 id="client_name"></h1>
+            </div>
+
             <div id="game_div">
                 <div id="title_div">
                     <h1>TwentyFour</h1>
@@ -28,7 +31,13 @@
                     <button id="host_button">HOST</button>
                 </div>
 
-                <canvas id="gameArea"></canvas>
+                <div id="twenty_four_controller">
+                    <div id="tf_text_area"></div>
+                    <div id="tf_new_numerals"></div>
+                    <div id="tf_grid_numerals"></div>
+                    <div id="tf_grid_operators"></div>
+                    <div id="tf_grid_equals"></div>
+                </div>
             </div>
         </div>
     </body>
@@ -58,7 +67,7 @@
                     ws = null;
                 }
 
-                System = document.getElementById("gameArea");
+
             }
 
             sendButton.onclick = function() {
@@ -88,7 +97,8 @@
     <script>
         //MESSAGE HANDLER
         function handleMessage(data) {
-            let message = JSON.parse(message.toString());
+            console.log(data.toString());
+            let message = JSON.parse(data.toString());
 
             switch (message.type) {
                 case 'login':
@@ -106,6 +116,7 @@
                         startHost();
                         return;
                     }
+                    clientName = message.name;
                     startPlayer();
                     return;
                 } else {
@@ -129,7 +140,9 @@
 
         function startPlayer() {
             clearTitle();
-
+            
+            const name = document.getElementById('client_name')
+            name.innerHTML = clientName;
         }
     </script>
 </html>

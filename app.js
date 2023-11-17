@@ -31,11 +31,11 @@ wss.on('connection', function connection(ws) {
             case 'login':
                 console.log("CASE: Login")
                 if(!page_modules.doLogin(message.name, wss, ws)) {
-                    ws.send(`{ "type" : "login", "name" : ${message.name}, "result" : "false"}`)
+                    ws.send(`{ "type" : "login", "name" : "${message.name}", "result" : "false"}`)
                 } else {
                     console.log('success')
                     ws.id = message.name
-                    ws.send(`{ "type" : "login", "name" : ${message.name}, "result" : "true"}`)
+                    ws.send(`{ "type" : "login", "name" : "${message.name}", "result" : "true"}`)
                 }
                 break;
         }
