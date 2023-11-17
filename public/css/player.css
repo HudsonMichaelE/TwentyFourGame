@@ -1,0 +1,51 @@
+body {
+    background-color : #2186eb;
+}
+
+#game_container {
+    position: relative;
+    height: 100%;
+}
+
+#game_div {
+    text-align: center;
+    position: absolute;
+    margin: 0;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    width: 50%;
+    height: 55%;
+    padding: 10px;
+}
+
+#gameArea {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    z-index: -100;
+}
+
+#login_div button {
+    width: 50%;
+    height: 15%;
+    margin-top: 4px;
+    color: #003c78;
+    background-color : #0b7df0;
+    border-style: solid;
+    border-color: #003c78;
+    border-width: 2px 2px 4px 2px;
+    transition-duration: 0.4s;
+}
+
+#login_div button:hover {
+    color: #ffffff;
+    background-color : #369bff;
+    border-style: solid;
+    border-color: #67b6ff;
+}

@@ -1,0 +1,28 @@
+<html>
+    <h1>HOST</h1>
+    <script>
+        (function () {
+            let ws;
+
+            function init() {
+                if(ws) {
+                    ws.onerror = ws.onopen = ws.onclose = null;
+                    ws.close();
+                }
+
+                ws = new WebSocket(`ws://${location.host}`);
+                ws.onopen = () => { 
+                    console.log('Connection opened!');
+                }
+
+                let message = `{ "type" : "login", "name" : "HOST"}`;
+                ws.send(message);
+
+                ws.onclose = function () {
+                    ws = null;
+                }
+            }
+            init();
+        })();
+    </script>
+</html>

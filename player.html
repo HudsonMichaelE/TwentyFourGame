@@ -1,0 +1,135 @@
+<html>
+    <script>
+        //VARIABLES
+        var clientName = '';
+        var System = null;
+        var WAITING_FOR_START = false;
+    </script>
+
+    <head>
+        <title>TwentyFour</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1">
+        <link rel="stylesheet" href="/css/player.css">
+        <link rel="shortcut icon" href="#" />
+    </head>
+
+    <body>
+        <div id="game_container">
+            <div id="game_div">
+                <div id="title_div">
+                    <h1>TwentyFour</h1>
+                    <h3>By Michael Hudson</h3>
+                </div>
+
+                <div id="login_div">
+                    <input type="text" id="login_textbox"><br>
+                    <button id="login_button">GO</button><br>
+                    <button id="host_button">HOST</button>
+                </div>
+
+                <canvas id="gameArea"></canvas>
+            </div>
+        </div>
+    </body>
+
+    <script>
+        (function () {
+            const textBox = document.querySelector('#login_textbox');
+            const sendButton = document.querySelector('#login_button');
+            const hostButton = document.querySelector('#host_button');
+
+            let ws;
+
+            function init() {
+                if(ws) {
+                    ws.onerror = ws.onopen = ws.onclose = null;
+                    ws.close();
+                }
+
+                ws = new WebSocket(`ws://${location.host}`);
+                ws.onopen = () => { 
+                    console.log('Connection opened!');
+                }
+
+                ws.onmessage = ({ data }) => handleMessage(data);
+
+                ws.onclose = function () {
+                    ws = null;
+                }
+
+                System = document.getElementById("gameArea");
+            }
+
+            sendButton.onclick = function() {
+                if (!ws) {
+                    alert("failed to find ws");
+                    return;
+                }
+
+                let message = `{ "type" : "login", "name" : "${textBox.value}"}`;
+                ws.send(message);
+            }
+
+            hostButton.onclick = function() {
+                if (!ws) {
+                    alert("failed to find ws");
+                    return;
+                }
+
+                let message = `{ "type" : "login", "name" : "HOST"}`;
+                ws.send(message);
+            }
+
+            init();
+        })();
+    </script>
+
+    <script>
+        //MESSAGE HANDLER
+        function handleMessage(data) {
+            let message = JSON.parse(message.toString());
+
+            switch (message.type) {
+                case 'login':
+                    message_login(message);
+                    break;
+            }
+        }
+
+        function message_login(message) {
+            let result = message.result === 'true';
+                if (result) {
+                    console.log("you logged in now, baby");
+                    clientName = message.name;
+                    if(message.name === 'HOST') {
+                        startHost();
+                        return;
+                    }
+                    startPlayer();
+                    return;
+                } else {
+                    console.log("try again, mission failed");
+                }
+            }
+
+        //GAME LOGIC
+        function clearTitle() {
+            const title = document.getElementById('title_div');
+            const login = document.getElementById('login_div');
+
+            title.style.display='none';
+            login.style.display='none';
+        }
+
+        function startHost() {
+            clearTitle();
+
+        }
+
+        function startPlayer() {
+            clearTitle();
+
+        }
+    </script>
+</html>
