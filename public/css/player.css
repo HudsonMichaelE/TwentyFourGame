@@ -35,20 +35,148 @@ body {
     left: 50%;
     -ms-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%);
-    width: 50%;
-    height: 55%;
+    width: 480px;
+    height: 70vh;
     padding: 10px;
 }
 
-#gameArea {
+#host_div {
+    display : none;
+    text-align: center;
     position: absolute;
+    margin: 0;
     top: 50%;
     left: 50%;
     -ms-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%);
+    width: 480px;
+    height: 70vh;
+    padding: 10px;
+    z-index: -1;
+}
+
+#host_settings {
+    height: 80%;
     width: 100%;
-    height: 100%;
-    z-index: -100;
+    border-radius: 5px;
+    background-color : #cbd5e1;
+    overflow-y: scroll;
+}
+
+#game_round_buttons {
+    display: flex;
+    gap: 10px;
+}
+
+#game_round_buttons h1{
+    flex: auto;
+    color: #ffffff;
+    background-color: #6b7280;
+    border-radius: 5px;
+}
+
+#game_round_buttons button{
+    flex: auto;
+    background-color: #fbbf24;
+    border-radius: 5px;
+    border-style: none;
+    color: #ffffff !important;
+    transition-duration: 0.1s;
+}
+
+#game_range_buttons {
+    display: flex;
+    gap: 10px;
+}
+
+#game_range_buttons h1{
+    flex: auto;
+    color: #ffffff;
+    background-color: #6b7280;
+    border-radius: 5px;
+}
+
+
+#game_range_buttons button{
+    flex: auto;
+    background-color: #fbbf24;
+    border-radius: 5px;
+    border-style: none;
+    color: #ffffff !important;
+    transition-duration: 0.1s;
+}
+
+#game_timer_buttons {
+    display: flex;
+    gap: 10px;
+}
+
+#game_timer_buttons h1{
+    flex: auto;
+    color: #ffffff;
+    background-color: #6b7280;
+    border-radius: 5px;
+}
+
+#game_timer_buttons button{
+    flex: auto;
+    background-color: #fbbf24;
+    border-radius: 5px;
+    border-style: none;
+    color: #ffffff !important;
+    transition-duration: 0.1s;
+}
+
+#game_point_buttons {
+    display: flex;
+    gap: 10px;
+}
+
+#game_point_buttons h1{
+    flex: auto;
+    color: #ffffff;
+    background-color: #6b7280;
+    border-radius: 5px;
+}
+
+#game_point_buttons button{
+    flex: auto;
+    background-color: #fbbf24;
+    border-radius: 5px;
+    border-style: none;
+    color: #ffffff !important;
+    transition-duration: 0.1s;
+}
+
+#start_game button {
+    width: 50%;
+    height: 15%;
+    margin-top: 4px;
+    color: #ffffff;
+    background-color : #10b981;
+    border-style: solid;
+    border-color: #0c835b;
+    border-radius: 4px;
+    border-width: 2px 2px 4px 2px;
+    transition-duration: 0.6s;
+}
+
+#start_game button:disabled {
+    width: 50%;
+    height: 15%;
+    margin-top: 4px;
+    border-radius: 20px;
+    color: #57e1b3;
+    background-color : #b6ebd9;
+    border-style: solid;
+    border-color: #76f4ca;
+}
+
+#start_game button:hover:enabled {
+    color: #ffffff;
+    background-color : #12986c;
+    border-style: solid;
+    border-color: #137c59;
 }
 
 #login_div button {
@@ -65,7 +193,137 @@ body {
 
 #login_div button:hover {
     color: #ffffff;
-    background-color : #369bff;
+    background-color : #12986c;
     border-style: solid;
-    border-color: #67b6ff;
+    border-color: #137c59;
+}
+
+#twenty_four_controller {
+    display : none;
+}
+
+#tf_text_area {
+    height: 35%;
+    width: 100%;
+    border-radius: 5px;
+    background-color : #cbd5e1;
+    overflow-y: scroll;
+}
+
+#tf_equations {
+    height: 6%;
+    width: 100%;
+    border-radius: 5px;
+    background-color : #cbd5e1;
+    margin-top: 20px;
+}
+
+#tf_new_numerals {
+    height: 6%;
+    width: 100%;
+    border-radius: 5px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 5px;
+}
+
+#tf_new_numerals button {
+    flex: auto;
+    background-color: #fbbf24;
+    border-radius: 5px;
+    border-style: none;
+    color: #ffffff;
+    transition-duration: 0.1s;
+}
+
+#tf_new_numerals button:hover {
+    background-color: #d97706;
+}
+
+#tf_bottom_holder {
+    height: 35%;
+    width: 100%;
+    display: flex;
+    gap: 10px;
+}
+
+#tf_grid_numerals {
+    display: grid;
+    flex-grow: 8;
+    gap: 10px 10px;
+    grid-template-columns: auto auto;
+    color: #ffffff;
+}
+
+#tf_grid_numerals button {
+    background-color: #6b7280;
+    border-radius: 5px;
+    border-style: none;
+    color: #ffffff;
+    transition-duration: 0.1s;
+}
+
+#tf_grid_numerals button:hover {
+    background-color : #a8acb5;
+    border-radius:30px;
+}
+
+
+#tf_grid_operators {
+    display: grid;
+    flex-grow: 8;
+    gap: 4px 4px;
+    grid-template-columns: auto auto auto;
+}
+
+#tf_grid_operators button {
+    background-color: #f97316;
+    border-radius: 5px;
+    border-style: none;
+    color: #ffffff;
+    transition-duration: 0.1s;
+}
+
+#tf_grid_operators button:hover {
+    background-color : #f79956;
+}
+
+#send_equals {
+    background-color: #f23f3f !important;
+    border-radius: 10px !important;
+    transition-duration: 0.6s !important;
+}
+
+#send_equals:hover{
+    background-color: #881212 !important;
+    border-radius: 30px !important;
+}
+
+#tf_grid_clear {
+    display: grid;
+    flex-grow: 2;
+    color: #ffffff;
+}
+
+#tf_grid_clear button {
+    background-color: #f23f3f;
+    border-style: none;
+    color: #ffffff;
+    border-radius: 5px;
+    transition-duration: 0.6s;
+}
+
+@media screen and (max-width:600px) {
+    #game_div {
+        text-align: center;
+        position: absolute;
+        margin: 0;
+        top: 50%;
+        left: 50%;
+        -ms-transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%);
+        width: 92vw;
+        height: 70vh;
+    }   
 }

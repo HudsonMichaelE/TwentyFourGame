@@ -3,6 +3,24 @@
         //VARIABLES
         var clientName = '';
         var WAITING_FOR_START = false;
+        var players = [];
+
+        function increment(pos, id, min, max, inc) {
+            var label = document.getElementById(id);
+            if (label) {
+                var value = parseInt(label.innerHTML);
+                if (pos) {
+                    if(value<max) {
+                        value += inc;
+                    }
+                } else {
+                    if(value>min) {
+                        value -= inc;
+                    }
+                }
+            }
+            label.innerHTML = value;
+        }
     </script>
 
     <head>
@@ -19,6 +37,8 @@
                 <h1 id="client_name"></h1>
             </div>
 
+            <!-- GAME DIV START -->
+
             <div id="game_div">
                 <div id="title_div">
                     <h1>TwentyFour</h1>
@@ -33,12 +53,113 @@
 
                 <div id="twenty_four_controller">
                     <div id="tf_text_area"></div>
-                    <div id="tf_new_numerals"></div>
-                    <div id="tf_grid_numerals"></div>
-                    <div id="tf_grid_operators"></div>
-                    <div id="tf_grid_equals"></div>
+                    <div id="tf_equations"></div>
+                    <div id="tf_new_numerals">
+                        <button id="tf_new_nemeral_demo" style="display:none">t1</button>
+                    </div>
+                    <div id="tf_bottom_holder">
+                        <div id="tf_grid_numerals">
+                            <button class="button_numeral"></button>
+                            <button class="button_numeral"></button>
+                            <button class="button_numeral"></button>
+                            <button class="button_numeral"></button>
+                        </div>
+                        <div id="tf_grid_operators">
+                            <button class="button_operator">(</button>
+                            <button class="button_operator">)</button>
+                            <button class="button_operator">&radic;</button>
+                            <button class="button_operator">+</button>
+                            <button class="button_operator">-</button>
+                            <button class="button_operator">!</button>
+                            <button class="button_operator">&div;</button>
+                            <button class="button_operator">x</button>
+                            <button id="send_equals">=</button>
+                        </div>
+                        <div id="tf_grid_clear">
+                            <button>C</button>
+                        </div>
+                    </div>
+                </div>   
+            </div>
+            <!--GAME DIV END-->
+
+            <!-- HOST DIV START -->
+            <div id="host_div">
+                <div id="host_settings">
+                    <h1>Game Mode</h1>
+                    <div id="game_mode_buttons">
+                        <div>
+                            <input type="radio" id="mode_tf" name="game_mode" value="0" checked />
+                            <label for="mode_tf">Twenty Four</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="mode_rand" name="game_mode" value="-1"/>
+                            <label for="mode_rand">Random</label>
+                        </div>
+                    </div>
+
+                    <h1>Game Type</h1>
+                    <div id="game_type_buttons">
+                        <div>
+                            <input type="radio" id="type_speed" name="game_type" value="0" checked />
+                            <label for="type_speed">Speed</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="type_first" name="game_type" value="1"/>
+                            <label for="type_first">First</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="type_elimination" name="game_type" value="2"/>
+                            <label for="type_elimination">Elimination</label>
+                        </div>
+                    </div>
+
+                    <h1>Range</h1>
+                    <div id="game_range_buttons">
+                        <button onclick="increment(false, 'game_range_min', 0, 100, 1)">&lt;</button>
+                        <h1 id="game_range_min">0</h1>
+                        <button onclick="increment(true, 'game_range_min', 0, 100, 1)">&gt;</button>
+
+                        <button onclick="increment(false, 'game_range_max', 0, 100, 1)">&lt;</button>
+                        <h1 id="game_range_max">10</h1>
+                        <button onclick="increment(true, 'game_range_max', 0, 100, 1)">&gt;</button>
+                    </div>
+
+                    <h1>Rounds</h1>
+                    <div id="game_round_buttons">
+                        <button onclick="increment(false, 'game_round', 1, 100, 1)">&lt;</button>
+                        <h1 id="game_round">3</h1>
+                        <button onclick="increment(true, 'game_round', 1, 100, 1)">&gt;</button>
+                    </div>
+
+                    <h1>Round Timer</h1>
+                    <div id="game_timer_buttons">
+                        <button onclick="increment(false, 'game_timer', 30, 300, 30)">&lt;</button>
+                        <h1 id="game_timer">60</h1>
+                        <button onclick="increment(true, 'game_timer', 30, 300, 30)">&gt;</button>
+                    </div>
+
+                    <h1>Speed Points</h1>
+                    <div id="game_point_buttons">
+                        <button onclick="increment(false, 'game_point', 10, 1000, 10)">&lt;</button>
+                        <h1 id="game_point">60</h1>
+                        <button onclick="increment(true, 'game_point', 10, 1000, 10)">&gt;</button>
+                    </div>
+
+                    <h1>Elimination Timer</h1>
+                    <div id="game_elim_buttons">
+                        <button onclick="increment(false, 'game_elim', 30, 120, 10)">&lt;</button>
+                        <h1 id="game_elem">30</h1>
+                        <button onclick="increment(true, 'game_elim', 30, 120, 10)">&gt;</button>
+                    </div>
+                </div>
+
+                <div id="start_game">
+                    <button id="start_button" disabled>START</button>
                 </div>
             </div>
+            <!-- HOST DIV END -->
+
         </div>
     </body>
 
@@ -47,6 +168,7 @@
             const textBox = document.querySelector('#login_textbox');
             const sendButton = document.querySelector('#login_button');
             const hostButton = document.querySelector('#host_button');
+            const startButton = document.querySelector('#start_button');
 
             let ws;
 
@@ -64,6 +186,8 @@
                 ws.onmessage = ({ data }) => handleMessage(data);
 
                 ws.onclose = function () {
+                    let message_disconnect = `{ "type" : "drop", "player_name" : "${clientName}"}`;
+                    ws.send(message_disconnect);
                     ws = null;
                 }
 
@@ -90,6 +214,23 @@
                 ws.send(message);
             }
 
+            startButton.onclick = function() {
+                if (!ws) {
+                    alert("failed to find ws");
+                    return;
+                }
+
+                var game_mode = document.querySelector('input[name="game_mode"]:checked').value;
+                var game_type = document.querySelector('input[name="game_type"]:checked').value;
+                var game_range = [parseInt(document.getElementById('game_range_min').innerHTML), parseInt(document.getElementById('game_range_max').innerHTML)];
+                var game_round = parseInt(document.getElementById('game_round').innerHTML);
+                var game_point = parseInt(document.getElementById('game_point').innerHTML);
+
+                let message = `{ "type" : "start_game", "game_mode" : "${game_mode}",  "game_type" : "${game_type}", "game_range" : "${game_range}",  "game_round" : "${game_round}",  "game_point" : "${game_point}"}`;
+                console.log(message);
+                ws.send(message);
+            }
+
             init();
         })();
     </script>
@@ -103,6 +244,15 @@
             switch (message.type) {
                 case 'login':
                     message_login(message);
+                    break;
+                case 'player_join':
+                    message_player_join(message);
+                    break;
+                case 'player_drop':
+                    message_player_drop(message);
+                    break;
+                case 'player_round':
+                    message_player_round(message);
                     break;
             }
         }
@@ -122,7 +272,44 @@
                 } else {
                     console.log("try again, mission failed");
                 }
+        }
+
+        function message_player_join(message) {
+            let player_name = message.player_name;
+            players.push(player_name);
+            console.log(`Player ${player_name} has joined!`);
+
+            //enable start button
+            if(players.length > 1) {
+                const startButton = document.getElementById('start_button');
+                startButton.disabled = false;
             }
+        }
+
+        function message_player_drop(message) {
+            let player_name = message.player_name;
+            var index = players.indexOf(player_name);
+            if (index !== -1) {
+                players.splice(index, 1);
+            }
+            console.log(`Player ${player_name} has been disconnected.`);
+        }
+
+        function message_player_round(message) {
+            const numButtons = document.getElementsByClassName('button_numeral');
+
+            var numArrays = JSON.parse("[" + message.numbers + "]");
+
+            numButtons[0].value = numArrays[0];
+            numButtons[1].value = numArrays[1];
+            numButtons[2].value = numArrays[2];
+            numButtons[3].value = numArrays[3];
+
+            numButtons[0].innerHTML = numArrays[0];
+            numButtons[1].innerHTML = numArrays[1];
+            numButtons[2].innerHTML = numArrays[2];
+            numButtons[3].innerHTML = numArrays[3];
+        }
 
         //GAME LOGIC
         function clearTitle() {
@@ -136,13 +323,25 @@
         function startHost() {
             clearTitle();
 
+            const name = document.getElementById('client_name');
+            const host = document.getElementById('host_div');
+            const game = document.getElementById('game_div');
+
+            game.style.display = 'none'
+
+            name.innerHTML = "TwentyFour";
+            host.style.display='initial';
+            host.style.zIndex='100';
         }
 
         function startPlayer() {
             clearTitle();
             
-            const name = document.getElementById('client_name')
+            const name = document.getElementById('client_name');
+            const twenty = document.getElementById('twenty_four_controller');
+
             name.innerHTML = clientName;
+            twenty.style.display='initial';
         }
     </script>
 </html>

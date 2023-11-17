@@ -14,6 +14,7 @@ app.get('/', (req, res) => {
   })
 
 const page_modules = require('./modules/page_modules.js')
+const game_modules = require('./modules/game_modules.js')
 
 const server = http.createServer(app)
 const wss = new WebSocket.Server({ server })
@@ -38,6 +39,14 @@ wss.on('connection', function connection(ws) {
                     ws.send(`{ "type" : "login", "name" : "${message.name}", "result" : "true"}`)
                 }
                 break;
+            case 'drop':
+                console.log("CASE: Drop")
+                page_modules.doLogout(message.player_name, wss, ws)
+                break
+            case 'start_game':
+                console.log("CASE: Start Game")
+                game_modules.startGame(page_modules.getPlayers().length, message, wss, ws)
+                break
         }
     })
 })
