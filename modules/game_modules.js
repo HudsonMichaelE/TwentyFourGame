@@ -1,4 +1,5 @@
 const WebSocket = require('ws')
+const math = require('mathjs')
 
 const gameState = {
 	WAITING: 0,
@@ -94,4 +95,11 @@ function doRound(wss, ws) {
 
 function endRound(wss, ws) {
 
+}
+
+exports.doValidation = function(data, ws) {
+    let answer = math.evaluate(data.equation);
+
+    let message = `{ "type" : "validated", "answer" : "${answer}" }`;
+    ws.send(message);
 }

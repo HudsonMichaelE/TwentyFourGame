@@ -208,6 +208,27 @@ body {
     border-radius: 5px;
     background-color : #cbd5e1;
     overflow-y: scroll;
+    display: grid;
+    gap: 4px;
+    grid-template-columns: auto;
+}
+
+.equations {
+    width: 100%;
+}
+
+.equations h2{
+    flex-grow: 8;
+}
+
+.equations button {
+    color: #f23f3f;
+    border-color: #f23f3f;
+    border-radius: 60px;
+    border-width: 4px;
+    background-color: transparent;
+    flex-grow: 1;
+    height: 60px;
 }
 
 #tf_equations {
@@ -241,6 +262,10 @@ body {
     background-color: #d97706;
 }
 
+#tf_new_numerals button:disabled {
+    background-color: #88561c;
+}
+
 #tf_bottom_holder {
     height: 35%;
     width: 100%;
@@ -262,6 +287,13 @@ body {
     border-style: none;
     color: #ffffff;
     transition-duration: 0.1s;
+}
+
+#tf_grid_numerals button:disabled {
+    background-color: #2c2d2f;
+    border-radius: 0px;
+    border-style: none;
+    color: #ffffff;
 }
 
 #tf_grid_numerals button:hover {

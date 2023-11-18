@@ -47,6 +47,19 @@ wss.on('connection', function connection(ws) {
                 console.log("CASE: Start Game")
                 game_modules.startGame(page_modules.getPlayers().length, message, wss, ws)
                 break
+            case 'validate':
+                console.log("CASE: Validate")
+                try {
+                    game_modules.doValidation(message, ws)
+                } catch (err) {
+                    console.error(err)
+                    let message = `{ "type" : "error", "text" : "Invalid Expression, please try again!" }`;
+                    ws.send(message);
+                }
+                break
+            case 'player_done':
+                console.log("CASE: Player Done")
+                break
         }
     })
 })

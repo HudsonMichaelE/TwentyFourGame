@@ -1,10 +1,13 @@
 <html>
     <script>
         //VARIABLES
-        const math = require('mathjs');
         var clientName = '';
         var WAITING_FOR_START = false;
         var players = [];
+
+        var equationNum = 0;
+        var tempButtonIds = [];
+        var equationsLock = [];
 
         function increment(pos, id, min, max, inc) {
             var label = document.getElementById(id);
@@ -29,19 +32,37 @@
             var x = obj.innerHTML;
             var base = equationBar.innerHTML;
 
+            
+
             if(x.length != 0) {
-                equationBar.innerHTML = base.concat(" ", x);
+                console.log(isNaN(base.slice(-1)));
+                if(!isNaN(x) && (isNaN(base.slice(-1)) || !base)) {
+                    obj.disabled = true;
+                    tempButtonIds.push(obj.id);
+                }
+
+                
+
+                if(!isNaN(x) && (isNaN(base.slice(-1)) || !base)) {
+                    if(base.endsWith("\u221A")) {
+                        x = "(" + obj.innerHTML + ")";
+                    }
+                    equationBar.innerHTML = base.concat(" ", x);
+                } else if (isNaN(x) && (!isNaN(base.slice(-1)) || !base)) {
+                    equationBar.innerHTML = base.concat(" ", x);
+                }
             }
         }
 
         function clearEquation() {
             const equationBar = document.getElementById('tf_equations_text');
             equationBar.innerHTML = '';
-        }
 
-        function validateEquation() {
-            var equation = document.getElementById('tf_equations_text').innerHTML;
-            M
+            tempButtonIds.forEach((element) => {
+                console.log(element);
+                var obj = document.getElementById(element);
+                obj.disabled = false;
+            });
         }
     </script>
 
@@ -51,6 +72,7 @@
         <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1">
         <link rel="stylesheet" href="/css/player.css">
         <link rel="shortcut icon" href="#" />
+        <script src=https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.3.0/math.min.js></script>
     </head>
 
     <body>
@@ -74,19 +96,24 @@
                 </div>
 
                 <div id="twenty_four_controller">
-                    <div id="tf_text_area"></div>
+                    <div id="tf_text_area">
+                       <div id="tf_text_demo" style="display:none">
+                            <h2></h2>
+                            <button onclick="removeEquation(this)">X</button>
+                       </div> 
+                    </div>
                     <div id="tf_equations">
                         <h1 id="tf_equations_text"></h1>
                     </div>
                     <div id="tf_new_numerals">
-                        <button id="tf_new_nemeral_demo" style="display:none">t1</button>
+                        <button id="tf_new_numeral_demo" style="display:none">t1</button>
                     </div>
                     <div id="tf_bottom_holder">
                         <div id="tf_grid_numerals">
-                            <button class="button_numeral" onclick="updateEquation(this)"></button>
-                            <button class="button_numeral" onclick="updateEquation(this)"></button>
-                            <button class="button_numeral" onclick="updateEquation(this)"></button>
-                            <button class="button_numeral" onclick="updateEquation(this)"></button>
+                            <button id="button_numeral0" class="button_numeral" onclick="updateEquation(this)"></button>
+                            <button id="button_numeral1" class="button_numeral" onclick="updateEquation(this)"></button>
+                            <button id="button_numeral2" class="button_numeral" onclick="updateEquation(this)"></button>
+                            <button id="button_numeral3" class="button_numeral" onclick="updateEquation(this)"></button>
                         </div>
                         <div id="tf_grid_operators">
                             <button class="button_operator" onclick="updateEquation(this)">(</button>
@@ -97,10 +124,11 @@
                             <button class="button_operator" onclick="updateEquation(this)">!</button>
                             <button class="button_operator" onclick="updateEquation(this)">&div;</button>
                             <button class="button_operator" onclick="updateEquation(this)">*</button>
-                            <button id="send_equals" onclick="validateEquation()">=</button>
+                            <button class="button_operator" onclick="updateEquation(this)">^</button>
                         </div>
                         <div id="tf_grid_clear">
                             <button onclick="clearEquation()">C</button>
+                            <button id="send_equals">=</button>
                         </div>
                     </div>
                 </div>   
@@ -188,11 +216,11 @@
     </body>
 
     <script>
-        (function () {
             const textBox = document.querySelector('#login_textbox');
             const sendButton = document.querySelector('#login_button');
             const hostButton = document.querySelector('#host_button');
             const startButton = document.querySelector('#start_button');
+            const equalsButton = document.querySelector('#send_equals');
 
             let ws;
 
@@ -255,8 +283,45 @@
                 ws.send(message);
             }
 
+            
+            function validateEquation() {
+                if (!ws) {
+                    alert("failed to find ws");
+                    return;
+                }
+
+                var equation = document.getElementById('tf_equations_text').innerHTML;
+                
+                let message = `{ "type" : "validate", "equation" : "${equation}" }`;
+                ws.send(message);
+            }
+
+            equalsButton.onclick = function() {
+                if (!ws) {
+                    alert("failed to find ws");
+                    return;
+                }
+
+                var equation = document.getElementById('tf_equations_text').innerHTML;
+                equation = equation.replace("\u00F7", "/");
+                equation = equation.replace("\u221A", "sqrt");
+                
+                let message = `{ "type" : "validate", "equation" : "${equation}" }`;
+                ws.send(message);
+            }
             init();
-        })();
+
+        function playerHasWon() {
+                if (!ws) {
+                    alert("failed to find ws");
+                    return;
+                }
+                var full_equation = ""
+                let message = `{ "type" : "player_done", "equation" : "${full_equation}""}`;
+
+                ws.send(message);
+            }
+
     </script>
 
     <script>
@@ -278,6 +343,9 @@
                 case 'player_round':
                     message_player_round(message);
                     break;
+                case 'validated':
+                    message_validated(message);
+                    break
             }
         }
 
@@ -333,6 +401,116 @@
             numButtons[1].innerHTML = numArrays[1];
             numButtons[2].innerHTML = numArrays[2];
             numButtons[3].innerHTML = numArrays[3];
+            startRound();
+        }
+
+        function message_validated(message) {
+            var equation = document.getElementById('tf_equations_text');
+
+            var origin = document.getElementById("tf_new_numeral_demo");
+            var clone = origin.cloneNode(true);
+
+            clone.id = "tf_new_numeral" + equationNum;
+            clone.classList.add("tf_new_number");
+            clone.style.display = "initial";
+            clone.style.flex = "auto";
+            clone.innerHTML = message.answer;
+            clone.onclick = function() {
+                updateEquation(this);
+            }
+
+            equationsLock[equationNum] = tempButtonIds;
+            
+            tempButtonIds.forEach((element) => {
+                console.log(element);
+                var obj = document.getElementById(element);
+                obj.disabled = true;
+            });
+
+            tempButtonIds = [];
+
+            origin.parentNode.appendChild(clone);
+            updateTextArea(equation.innerHTML + " = " + message.answer);
+            checkWin();
+            equation.innerHTML = "";
+        }
+
+        function updateTextArea(full_equation) {
+            var origin = document.getElementById('tf_text_demo');
+            var clone = origin.cloneNode(true);
+
+            var header = clone.getElementsByTagName("h2");
+            if(header[0]) {
+                header[0].innerHTML = full_equation;
+            }
+
+            clone.style.display = "flex";
+            clone.classList.add('equations');
+            clone.id = "tf_text_demo" + equationNum;
+            origin.parentNode.appendChild(clone);
+
+            equationNum++;
+        }
+
+        function checkWin() {
+            var set_numbers = document.getElementsByClassName('button_numeral');
+            var new_numbers = document.getElementsByClassName('tf_new_number');
+
+            var all_set_used = true;
+            var sets_left = 0;
+            var last_set = null;
+
+            for (var i = 0; i < set_numbers.length; i++) {
+                if(set_numbers[i].disabled == false) {
+                    all_set_used = false;
+                }
+            }
+
+            for (var i = 0; i < new_numbers.length; i++) {
+                if(new_numbers[i].disabled == false) {
+                    sets_left++;
+                    last_set = new_numbers[i];
+                }
+            }
+
+            console.log('Is Player done?: all_set: ' + all_set_used + " set Numbers: " + set_numbers + " last Number? " + last_set.innerHTML);
+            if(all_set_used && sets_left == 1 && last_set.innerHTML == "24") {
+                playerHasWon();
+            }
+        }
+
+        function removeEquation(button) {
+            var parent = button.parentNode;
+            var num = parseInt(parent.id.slice(-1));
+            var new_numeral = document.getElementById("tf_new_numeral" + num);
+
+            equationsLock[num].forEach((element) => {
+                var obj = document.getElementById(element);
+                obj.disabled = false;
+            });
+
+            new_numeral.remove();
+            parent.remove();
+        }
+
+        function removeAllEquations() {
+            equationsLock = [];
+            tempButtonIds = [];
+            equationNum = 0;
+
+            //remove all equations
+            var par = document.getElementById('tf_text_area');
+            var equations = par.getElementsByClassName('equations');
+            for (var i = 0; i < equations.length; i++) {
+                equations[i].remove();
+            }
+
+            //remove all new number button
+            var newnumpar = document.getElementById('tf_new_numerals');
+            var newnums = newnumpar.getElementsByClassName('tf_new_number');
+            for (var i = 0; i < newnums.length; i++) {
+                newnums[i].remove();
+            }
         }
 
         //GAME LOGIC
@@ -342,6 +520,19 @@
 
             title.style.display='none';
             login.style.display='none';
+        }
+
+        function clearControls() {
+            const twenty = document.getElementById('twenty_four_controller');
+
+            twenty.style.display='none';
+            removeAllEquations();
+        }
+
+        function showControls() {
+            const twenty = document.getElementById('twenty_four_controller');
+
+            twenty.style.display='initial';
         }
 
         function startHost() {
@@ -359,13 +550,21 @@
         }
 
         function startPlayer() {
-            clearTitle();
-            
             const name = document.getElementById('client_name');
-            const twenty = document.getElementById('twenty_four_controller');
 
             name.innerHTML = clientName;
-            twenty.style.display='initial';
+            waitForNextRound();
+        }
+
+        function waitForNextRound() {
+            clearTitle();
+            clearControls();
+        }
+
+        function startRound() {
+            if(clientName!='') {
+                showControls();
+            }
         }
     </script>
 </html>
