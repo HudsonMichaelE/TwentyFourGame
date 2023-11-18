@@ -21,6 +21,27 @@
             }
             label.innerHTML = value;
         }
+
+        function updateEquation(obj) {
+            const equationBar = document.getElementById('tf_equations_text');
+
+            var x = obj.innerHTML;
+            var base = equationBar.innerHTML;
+
+            if(x.length != 0) {
+                equationBar.innerHTML = base.concat(" ", x);
+            }
+        }
+
+        function clearEquation() {
+            const equationBar = document.getElementById('tf_equations_text');
+            equationBar.innerHTML = '';
+        }
+
+        function validateEquation() {
+            var equation = document.getElementById('tf_equations_text').innerHTML;
+            M
+        }
     </script>
 
     <head>
@@ -53,30 +74,32 @@
 
                 <div id="twenty_four_controller">
                     <div id="tf_text_area"></div>
-                    <div id="tf_equations"></div>
+                    <div id="tf_equations">
+                        <h1 id="tf_equations_text"></h1>
+                    </div>
                     <div id="tf_new_numerals">
                         <button id="tf_new_nemeral_demo" style="display:none">t1</button>
                     </div>
                     <div id="tf_bottom_holder">
                         <div id="tf_grid_numerals">
-                            <button class="button_numeral"></button>
-                            <button class="button_numeral"></button>
-                            <button class="button_numeral"></button>
-                            <button class="button_numeral"></button>
+                            <button class="button_numeral" onclick="updateEquation(this)"></button>
+                            <button class="button_numeral" onclick="updateEquation(this)"></button>
+                            <button class="button_numeral" onclick="updateEquation(this)"></button>
+                            <button class="button_numeral" onclick="updateEquation(this)"></button>
                         </div>
                         <div id="tf_grid_operators">
-                            <button class="button_operator">(</button>
-                            <button class="button_operator">)</button>
-                            <button class="button_operator">&radic;</button>
-                            <button class="button_operator">+</button>
-                            <button class="button_operator">-</button>
-                            <button class="button_operator">!</button>
-                            <button class="button_operator">&div;</button>
-                            <button class="button_operator">x</button>
-                            <button id="send_equals">=</button>
+                            <button class="button_operator" onclick="updateEquation(this)">(</button>
+                            <button class="button_operator" onclick="updateEquation(this)">)</button>
+                            <button class="button_operator" onclick="updateEquation(this)">&radic;</button>
+                            <button class="button_operator" onclick="updateEquation(this)">+</button>
+                            <button class="button_operator" onclick="updateEquation(this)">-</button>
+                            <button class="button_operator" onclick="updateEquation(this)">!</button>
+                            <button class="button_operator" onclick="updateEquation(this)">&div;</button>
+                            <button class="button_operator" onclick="updateEquation(this)">*</button>
+                            <button id="send_equals" onclick="validateEquation()">=</button>
                         </div>
                         <div id="tf_grid_clear">
-                            <button>C</button>
+                            <button onclick="clearEquation()">C</button>
                         </div>
                     </div>
                 </div>   
