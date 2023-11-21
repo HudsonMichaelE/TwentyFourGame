@@ -9,6 +9,9 @@
         var tempButtonIds = [];
         var equationsLock = [];
 
+        var correct_audio = new Audio('/audio/Correct.wav');
+        var newRound_audio = new Audio('/audio/New_Round.wav');
+
         function increment(pos, id, min, max, inc) {
             var label = document.getElementById(id);
             if (label) {
@@ -79,6 +82,20 @@
         <div id="game_container">
             <div id="name_div">
                 <h1 id="client_name"></h1>
+            </div>
+
+            <div id="time_container" style="display:none">
+                <h1 id="time_label"></h1>
+                <svg>
+                    <circle id="time_circle" r="30%" cx="68" cy="60"></circle>
+                </svg>
+            </div>
+
+            <div id="players_container">
+                <div id="player_demo" class="_players" style="display:none">
+                    <h1 class="player_name"></h1>
+                    <h2 class="player_points">0</h2>
+                </div>
             </div>
 
             <!-- GAME DIV START -->
@@ -186,9 +203,9 @@
 
                     <h1>Round Timer</h1>
                     <div id="game_timer_buttons">
-                        <button onclick="increment(false, 'game_timer', 30, 300, 30)">&lt;</button>
+                        <button onclick="increment(false, 'game_timer', 10, 300, 10)">&lt;</button>
                         <h1 id="game_timer">60</h1>
-                        <button onclick="increment(true, 'game_timer', 30, 300, 30)">&gt;</button>
+                        <button onclick="increment(true, 'game_timer', 10, 300, 10)">&gt;</button>
                     </div>
 
                     <h1>Speed Points</h1>
@@ -201,7 +218,7 @@
                     <h1>Elimination Timer</h1>
                     <div id="game_elim_buttons">
                         <button onclick="increment(false, 'game_elim', 30, 120, 10)">&lt;</button>
-                        <h1 id="game_elem">30</h1>
+                        <h1 id="game_elim">30</h1>
                         <button onclick="increment(true, 'game_elim', 30, 120, 10)">&gt;</button>
                     </div>
                 </div>
@@ -212,6 +229,12 @@
             </div>
             <!-- HOST DIV END -->
 
+            <div id="numbers_host" style="display: none;">
+                <div id="host_number0"></div>
+                <div id="host_number1"></div>
+                <div id="host_number2"></div>
+                <div id="host_number3"></div>
+            </div>
         </div>
     </body>
 
@@ -277,10 +300,14 @@
                 var game_range = [parseInt(document.getElementById('game_range_min').innerHTML), parseInt(document.getElementById('game_range_max').innerHTML)];
                 var game_round = parseInt(document.getElementById('game_round').innerHTML);
                 var game_point = parseInt(document.getElementById('game_point').innerHTML);
+                var game_timer = parseInt(document.getElementById('game_timer').innerHTML);
+                var game_elim = parseInt(document.getElementById('game_elim').innerHTML);
 
-                let message = `{ "type" : "start_game", "game_mode" : "${game_mode}",  "game_type" : "${game_type}", "game_range" : "${game_range}",  "game_round" : "${game_round}",  "game_point" : "${game_point}"}`;
+                let message = `{ "type" : "start_game", "game_mode" : "${game_mode}",  "game_type" : "${game_type}", "game_range" : "${game_range}",  "game_round" : "${game_round}",  "game_point" : "${game_point}", "game_timer" : "${game_timer}", "game_elim" : "${game_elim}"}`;
                 console.log(message);
                 ws.send(message);
+
+                waitForNextRound();
             }
 
             
@@ -316,10 +343,24 @@
                     alert("failed to find ws");
                     return;
                 }
-                var full_equation = ""
-                let message = `{ "type" : "player_done", "equation" : "${full_equation}""}`;
+                var full_equation = "";
+                var equations = document.getElementsByClassName('equations');
+                
+                for (var i = 0; i < equations.length; i++) {
+                    var h2 = equations[i].getElementsByTagName("h2");
+                    var text = h2[0].innerHTML;
+
+                    full_equation = full_equation + '"' + text + '"' + ", ";
+                }
+
+                full_equation = full_equation.substring(0, full_equation.length - 2);
+                console.log(full_equation);
+                let message = `{ "type" : "player_done", "equation" : [${full_equation}] }`;
 
                 ws.send(message);
+
+                correct_audio.play();
+                waitForNextRound();
             }
 
     </script>
@@ -345,7 +386,19 @@
                     break;
                 case 'validated':
                     message_validated(message);
-                    break
+                    break;
+                case 'time':
+                    message_do_time(message);
+                    break;
+                case 'point_update':
+                    message_point_update(message);
+                    break;
+                case 'end_round':
+                    message_end_round(message);
+                    break;
+                case 'end_game':
+                    message_end_game(message);
+                    break;
             }
         }
 
@@ -358,7 +411,6 @@
                         startHost();
                         return;
                     }
-                    clientName = message.name;
                     startPlayer();
                     return;
                 } else {
@@ -372,10 +424,22 @@
             console.log(`Player ${player_name} has joined!`);
 
             //enable start button
-            if(players.length > 1) {
+            if(players.length >= 1) {
                 const startButton = document.getElementById('start_button');
                 startButton.disabled = false;
             }
+
+            var playerDiv = document.getElementById("players_container");
+            var playerDemo = document.getElementById("player_demo");
+            var clone = playerDemo.cloneNode(true);
+
+            clone.id = "_player" + player_name;
+            clone.style.display = "initial";
+
+            var nameTag = clone.getElementsByTagName('h1');
+            nameTag[0].innerHTML = player_name;
+
+            playerDiv.appendChild(clone);
         }
 
         function message_player_drop(message) {
@@ -433,6 +497,39 @@
             updateTextArea(equation.innerHTML + " = " + message.answer);
             checkWin();
             equation.innerHTML = "";
+        }
+
+        function message_do_time(message) {
+            //console.log(message.time_left);
+            var timeCircle = document.getElementById('time_circle');
+            var timeLabel = document.getElementById('time_label');
+
+            timeLabel.innerHTML = message.time_left;
+
+            let timeRatio = message.time_left / message.time_max;
+            let newTimeCircle = 225-(225 * timeRatio);
+
+            timeCircle.style.strokeDashoffset = parseInt(newTimeCircle) + "px";
+        }
+
+        function message_point_update(message) {
+            var playerDiv = document.getElementById("_player" + message.player_name);
+            var pointTag = playerDiv.getElementsByTagName('h2');
+
+            pointTag[0].innerHTML = message.points;
+            playerDiv.style.backgroundColor = '#fbbf24';
+        }
+
+        function message_end_round(message) {
+            waitForNextRound();
+        }
+
+        function message_end_game(message) {
+            if (clientName == 'HOST') {
+                doEndGame(message.winner);
+            } else {
+                location.reload();
+            }
         }
 
         function updateTextArea(full_equation) {
@@ -501,16 +598,26 @@
             //remove all equations
             var par = document.getElementById('tf_text_area');
             var equations = par.getElementsByClassName('equations');
-            for (var i = 0; i < equations.length; i++) {
-                equations[i].remove();
+            while(equations[0]) {
+                equations[0].remove();
+                equations = par.getElementsByClassName('equations');
             }
 
             //remove all new number button
             var newnumpar = document.getElementById('tf_new_numerals');
             var newnums = newnumpar.getElementsByClassName('tf_new_number');
-            for (var i = 0; i < newnums.length; i++) {
-                newnums[i].remove();
+
+            while(newnums[0]) {
+                newnums[0].remove();
+                newnums = newnumpar.getElementsByClassName('tf_new_number');
             }
+
+            var button_numerals = document.getElementsByClassName('button_numeral');
+            for (var i = 0; i < button_numerals.length; i++) {
+                button_numerals[i].disabled = false;
+            }
+
+            document.getElementById('tf_equations_text').innerHTML = '';
         }
 
         //GAME LOGIC
@@ -524,15 +631,59 @@
 
         function clearControls() {
             const twenty = document.getElementById('twenty_four_controller');
+            var timeCircle = document.getElementById('time_circle');
+            var timeLabel = document.getElementById('time_label');
+            var timeContainer = document.getElementById('time_container');
 
-            twenty.style.display='none';
             removeAllEquations();
+            twenty.style.display='none';
+
+            timeLabel.innerHTML = '';
+            timeCircle.style.strokeDashoffset = "0px";
+            timeContainer.style.display = "none";
+        }
+
+        function clearStartMenu() {
+            const host = document.getElementById('host_div');
+
+            host.style.display='none';
         }
 
         function showControls() {
             const twenty = document.getElementById('twenty_four_controller');
+            var timeContainer = document.getElementById('time_container');
 
             twenty.style.display='initial';
+            timeContainer.style.display = "initial";
+        }
+
+        function showNumbers() {
+            const numButtons = document.getElementsByClassName('button_numeral');
+            for(var i = 0; i < numButtons.length; i++) {
+                console.log(numButtons[i].value);
+                let num = document.getElementById("host_number"+i);
+                num.textContent = numButtons[i].value;
+            }
+            var timeContainer = document.getElementById('time_container');
+
+            var hostNumDiv = document.getElementById("numbers_host");
+            hostNumDiv.style.display = "flex";
+            timeContainer.style.display = "initial";
+        }
+
+        function hideNumbers() {
+            var hostNumDiv = document.getElementById("numbers_host");
+            hostNumDiv.style.display = "none";
+
+            var timeContainer = document.getElementById('time_container');
+            timeContainer.style.display = "initial";
+        }
+
+        function resetPlayersBackgrounds() {
+            var playerBk = document.getElementsByClassName("_players");
+            for(var i = 0; i < playerBk.length; i++) {
+                playerBk[i].style.backgroundColor = 'white';
+            }
         }
 
         function startHost() {
@@ -541,6 +692,9 @@
             const name = document.getElementById('client_name');
             const host = document.getElementById('host_div');
             const game = document.getElementById('game_div');
+            var timeContainer = document.getElementById('time_container');
+
+            timeContainer.style.top = "65vh";
 
             game.style.display = 'none'
 
@@ -557,13 +711,23 @@
         }
 
         function waitForNextRound() {
-            clearTitle();
-            clearControls();
+            if(clientName!='HOST') {
+                clearTitle();
+                clearControls();
+            } else {
+                hideNumbers();
+                clearStartMenu();
+                resetPlayersBackgrounds();
+            }
         }
 
         function startRound() {
-            if(clientName!='') {
+            if(clientName!='HOST') {
+                newRound_audio.play();
                 showControls();
+            } else {
+                newRound_audio.play();
+                showNumbers();
             }
         }
     </script>

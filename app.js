@@ -59,6 +59,7 @@ wss.on('connection', function connection(ws) {
                 break
             case 'player_done':
                 console.log("CASE: Player Done")
+                game_modules.playerDone(message, wss, ws);
                 break
         }
     })

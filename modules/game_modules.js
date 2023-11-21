@@ -41,43 +41,78 @@ var _elimination_timer = 30;
 //number range for twenty four gamemode
 var _numeral_range = [0, 10];
 
-const ROUND_DELAY = 6000;
+//timer for round holder
+var roundTimer;
 
+//Current Round Time
+var currentTime = _round_timer;
+
+const ROUND_DELAY = 3000;
+
+/* const playerData = {
+    name: '',
+    first_points:0,
+    speed_points:0.0,
+    elim_points:30
+} */
+
+const playersData = [];
+
+var startElim = false;
+var dontBurn = [];
+var eliminated = [];
 
 exports.startGame = function (playerCount, data, wss, ws) {
     switch (parseInt(data.game_mode)) {
         case -1:
-            _type = gameMode.RANDOM;
+            _mode = gameMode.RANDOM;
             break;
         case 0:
-            _type = gameMode.TWENTYFOUR;
+            _mode = gameMode.TWENTYFOUR;
             break;
     }
 
     switch (parseInt(data.game_type)) {
         case 0:
-            _mode = gameType.SPEED;
+            _type = gameType.SPEED;
             break;
         case 1:
-            _mode = gameType.FIRST;
+            _type = gameType.FIRST;
             break;
         case 2:
-            _mode = gameType.ELIMINATION;
+            _type = gameType.ELIMINATION;
             break;
     }
 
     _rounds_to_win = parseInt(data.game_round);
     _round_timer = parseInt(data.game_timer);
+    currentTime = _round_timer;
     _points_to_win = parseInt(data.game_point);
     _elimination_timer = parseInt(data.game_elim);
 
     _numeral_range = JSON.parse("[" + data.game_range + "]");
 
+    //setup players
+    wss.clients.forEach(function each(client) {
+        if (client != ws && client.readyState == WebSocket.OPEN) {
+            var playerData = {
+                name: client.id,
+                first_points:0,
+                speed_points:0.0,
+                elim_points:30
+            }
+            playersData.push(playerData);
+        }
+    })
+
     //buffer round
-    setTimeout(doRound, 6000, wss, ws)
+    setTimeout(doRound, ROUND_DELAY, wss)
 }
 
-function doRound(wss, ws) {
+function doRound(wss) {
+    
+    currentTime = _round_timer;
+
     var int1 = Math.floor(Math.random() * _numeral_range[1]) + _numeral_range[0];
     var int2 = Math.floor(Math.random() * _numeral_range[1]) + _numeral_range[0];
     var int3 = Math.floor(Math.random() * _numeral_range[1]) + _numeral_range[0];
@@ -87,14 +122,52 @@ function doRound(wss, ws) {
     console.log(message);
 
     wss.clients.forEach(function each(client) {
-        if (client != ws && client.readyState == WebSocket.OPEN) {
+        if (client.readyState == WebSocket.OPEN) {
+            client.send(message);
+
+            var clientExists = false;
+            for(var i = 0; i < playersData.length; i++) {
+                if(client.id == playersData[i].name) {
+                    clientExists = true;
+                }
+            }
+            if(!clientExists) {
+                var playerData = {
+                    name: client.id,
+                    first_points:0,
+                    speed_points:0.0,
+                    elim_points:30
+                }
+                playersData.push(playerData);
+            }
+        }
+    })
+
+    switch (_type) {
+        case gameType.FIRST:
+            roundTimer = setInterval(doTick, 1000, wss);
+            break;
+        case gameType.SPEED:
+            roundTimer = setInterval(doTick, 1000, wss);
+            break;
+        case gameType.ELIMINATION:
+            startElim = false;
+            roundTimer = setInterval(doElim, 1000, wss);
+            break;
+    }
+}
+
+function endRound(wss) {
+    clearInterval(roundTimer);
+    roundTimer = null;
+
+    wss.clients.forEach(function each(client) {
+        let message = '{ "type" : "end_round" }';
+        if (client.readyState == WebSocket.OPEN) {
             client.send(message);
         }
     })
-}
-
-function endRound(wss, ws) {
-
+    setTimeout(doRound, ROUND_DELAY, wss)
 }
 
 exports.doValidation = function(data, ws) {
@@ -102,4 +175,121 @@ exports.doValidation = function(data, ws) {
 
     let message = `{ "type" : "validated", "answer" : "${answer}" }`;
     ws.send(message);
+}
+
+exports.playerDone = function(data, wss, ws) {
+    switch (_type) {
+        case gameType.FIRST:
+            addFirstPoints(wss, ws);
+            endRound(wss);
+            break;
+        case gameType.SPEED:
+            addSpeedPoints(wss, ws);
+            break;
+        case gameType.ELIMINATION:
+            noBurn(ws);
+    }
+    updatePointValues(wss, ws);
+}
+
+function updatePointValues(wss, ws) {
+    var points = 0;
+
+    for(var i = 0; i < playersData.length; i++) {
+        if(ws.id == playersData[i].name) {
+            switch (_type) {
+                case gameType.FIRST:
+                    points = playersData[i].first_points;
+                    break;
+                case gameType.SPEED:
+                    points = playersData[i].speed_points;
+                    break;;
+            }
+        }
+    }
+
+    let message = `{ "type" : "point_update", "player_name" : "${ws.id}", "points" : "${points}"}`;
+
+    wss.clients.forEach(function each(client) {
+        if (client.id == 'HOST' && client.readyState == WebSocket.OPEN) {
+            client.send(message);
+        }
+    })
+}
+
+function addFirstPoints(wss, ws) {
+    playersData.forEach((player) => {
+        if (player.name == ws.id) {
+            player.first_points += 1;
+            if(player.first_points == _rounds_to_win) {
+                gameEnd(wss);
+            }
+        }
+    })
+    endRound(wss);
+}
+
+function addSpeedPoints(wss, ws) {
+    playersData.forEach((player) => {
+        if (player.name == ws.id) {
+            player.speed_points += currentTime;
+            if(player.speed_points >= _points_to_win) {
+                gameEnd(wss);
+            }
+        }
+    })
+}
+
+function doTick(wss) {
+    currentTime -= 1;
+    if(currentTime <= 0) {
+        clearInterval(roundTimer);
+        endRound(wss);
+    } else {
+        let message = `{ "type" : "time", "time_max" : "${_round_timer}", "time_left" : "${currentTime}"}`;
+        wss.clients.forEach(function each(client) {
+            if (client.readyState == WebSocket.OPEN) {
+                client.send(message);
+            }
+        })
+    }
+}
+
+function noBurn(ws) {
+    if(!startElim) {
+        startElim = true;
+    }
+    dontBurn.push(ws.id);
+}
+
+function doElim(wss) {
+    if(startElim) {
+        playersData.forEach((player) => {
+            if (dontBurn.indexOf(player.name) !== -1) {
+                player.elim_points -= 1;
+                if(player.elim_points <= 0) {
+                    eliminated.push(player.name);
+                }
+            }
+        })
+    }
+    checkEndElim(wss)
+}
+
+function checkEndElim(wss) {
+    if(playersData.length == eliminated.length - 1) {
+        clearInterval(roundTimer);
+        roundTimer = null;
+        gameEnd(wss);
+        return;
+    }
+
+    if (playersData.length == eliminated.length + dontBurn.length) {
+        clearInterval(roundTimer);
+        endRound(wss);
+    }
+}
+
+function gameEnd(wss) {
+    let message = `{ "type" : "end_game", "winner" : "noboby" }`;
 }
