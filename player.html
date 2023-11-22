@@ -9,6 +9,8 @@
         var tempButtonIds = [];
         var equationsLock = [];
 
+        var roundNum = 1;
+
         var correct_audio = new Audio('/audio/Correct.wav');
         var newRound_audio = new Audio('/audio/New_Round.wav');
 
@@ -235,6 +237,13 @@
                 <div id="host_number2"></div>
                 <div id="host_number3"></div>
             </div>
+
+            <div id="show_equation" style="display: none;">
+                <h1 id="equation_name"></h1>
+                <h2 id="equation_eq"></h2>
+            </div>
+
+            <h1 id="round_title" style="display: none;">Round 1</h1>
         </div>
     </body>
 
@@ -355,11 +364,10 @@
 
                 full_equation = full_equation.substring(0, full_equation.length - 2);
                 console.log(full_equation);
-                let message = `{ "type" : "player_done", "equation" : [${full_equation}] }`;
+                let message = `{ "type" : "player_done", "equation" : [${full_equation}], "name" : "${clientName}"}`;
 
                 ws.send(message);
 
-                correct_audio.play();
                 waitForNextRound();
             }
 
@@ -392,6 +400,9 @@
                     break;
                 case 'point_update':
                     message_point_update(message);
+                    break;
+                case 'show_equation':
+                    message_show_equation(message);
                     break;
                 case 'end_round':
                     message_end_round(message);
@@ -518,18 +529,43 @@
 
             pointTag[0].innerHTML = message.points;
             playerDiv.style.backgroundColor = '#fbbf24';
+
+            correct_audio.play();
+        }
+
+        function message_show_equation(message) {
+            var equationDiv = document.getElementById("show_equation");
+            var equationPlayer = document.getElementById("equation_name");
+            var equationEQ = document.getElementById("equation_eq");
+
+            equationPlayer.innerHTML = message.player_name;
+            var equationFormat = message.equation.replaceAll(", ", "<br>")
+            equationEQ.innerHTML = equationFormat;
+
+            equationDiv.style.display = "initial";
+            setTimeout(hideEquation, 4000)
         }
 
         function message_end_round(message) {
+            if (clientName == 'HOST') {
+                
+            }
             waitForNextRound();
         }
 
         function message_end_game(message) {
             if (clientName == 'HOST') {
-                doEndGame(message.winner);
+                doEndGame(message.winner, message.points);
             } else {
-                location.reload();
+                waitForNextRound();
             }
+        }
+
+        function doEndGame(winner, points) {
+            hideNumbers();
+            clearStartMenu();
+            resetPlayersBackgrounds();
+            startHost();
         }
 
         function updateTextArea(full_equation) {
@@ -618,6 +654,11 @@
             }
 
             document.getElementById('tf_equations_text').innerHTML = '';
+        }
+
+        function hideEquation() {
+            var equationDiv = document.getElementById("show_equation");
+            equationDiv.style.display = "none";
         }
 
         //GAME LOGIC
@@ -718,6 +759,7 @@
                 hideNumbers();
                 clearStartMenu();
                 resetPlayersBackgrounds();
+                showRoundTitle();
             }
         }
 
@@ -728,7 +770,21 @@
             } else {
                 newRound_audio.play();
                 showNumbers();
+                clearRoundTitle();
             }
+        }
+
+        function showRoundTitle() {
+            var title = document.getElementById("round_title");
+            title.style.display = "initial";
+        }
+
+        function clearRoundTitle() {
+            var title = document.getElementById("round_title");
+            title.style.display = "none";
+
+            roundNum++;
+            title.innerHTML = "Round " + roundNum;
         }
     </script>
 </html>

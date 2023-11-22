@@ -43,11 +43,12 @@ var _numeral_range = [0, 10];
 
 //timer for round holder
 var roundTimer;
+var delayTimeout;
 
 //Current Round Time
 var currentTime = _round_timer;
 
-const ROUND_DELAY = 3000;
+const ROUND_DELAY = 10000;
 
 /* const playerData = {
     name: '',
@@ -106,11 +107,11 @@ exports.startGame = function (playerCount, data, wss, ws) {
     })
 
     //buffer round
-    setTimeout(doRound, ROUND_DELAY, wss)
+    delayTimeout = setTimeout(doRound, ROUND_DELAY, wss)
 }
 
 function doRound(wss) {
-    
+    clearTimeout(delayTimeout);
     currentTime = _round_timer;
 
     var int1 = Math.floor(Math.random() * _numeral_range[1]) + _numeral_range[0];
@@ -142,7 +143,7 @@ function doRound(wss) {
             }
         }
     })
-
+    
     switch (_type) {
         case gameType.FIRST:
             roundTimer = setInterval(doTick, 1000, wss);
@@ -159,7 +160,6 @@ function doRound(wss) {
 
 function endRound(wss) {
     clearInterval(roundTimer);
-    roundTimer = null;
 
     wss.clients.forEach(function each(client) {
         let message = '{ "type" : "end_round" }';
@@ -167,7 +167,7 @@ function endRound(wss) {
             client.send(message);
         }
     })
-    setTimeout(doRound, ROUND_DELAY, wss)
+    delayTimeout = setTimeout(doRound, ROUND_DELAY, wss)
 }
 
 exports.doValidation = function(data, ws) {
@@ -189,10 +189,12 @@ exports.playerDone = function(data, wss, ws) {
         case gameType.ELIMINATION:
             noBurn(ws);
     }
-    updatePointValues(wss, ws);
+    updatePointValues(wss, ws, data);
 }
 
-function updatePointValues(wss, ws) {
+
+
+function updatePointValues(wss, ws, data) {
     var points = 0;
 
     for(var i = 0; i < playersData.length; i++) {
@@ -209,10 +211,12 @@ function updatePointValues(wss, ws) {
     }
 
     let message = `{ "type" : "point_update", "player_name" : "${ws.id}", "points" : "${points}"}`;
+    let equation_message = `{ "type" : "show_equation", "player_name" : "${ws.id}", "equation" : "${data.equation}" }`
 
     wss.clients.forEach(function each(client) {
         if (client.id == 'HOST' && client.readyState == WebSocket.OPEN) {
             client.send(message);
+            client.send(equation_message);
         }
     })
 }
@@ -222,7 +226,7 @@ function addFirstPoints(wss, ws) {
         if (player.name == ws.id) {
             player.first_points += 1;
             if(player.first_points == _rounds_to_win) {
-                gameEnd(wss);
+                gameEnd(wss, player.name, player.first_points);
             }
         }
     })
@@ -234,7 +238,7 @@ function addSpeedPoints(wss, ws) {
         if (player.name == ws.id) {
             player.speed_points += currentTime;
             if(player.speed_points >= _points_to_win) {
-                gameEnd(wss);
+                gameEnd(wss, player.name, player.speed_points);
             }
         }
     })
@@ -280,7 +284,7 @@ function checkEndElim(wss) {
     if(playersData.length == eliminated.length - 1) {
         clearInterval(roundTimer);
         roundTimer = null;
-        gameEnd(wss);
+        gameEnd(wss, "NOT_IMPLEMENTED", 0);
         return;
     }
 
@@ -290,6 +294,14 @@ function checkEndElim(wss) {
     }
 }
 
-function gameEnd(wss) {
-    let message = `{ "type" : "end_game", "winner" : "noboby" }`;
+function gameEnd(wss, name, points) {
+    console.log("Game End");
+    clearInterval(roundTimer);
+    let message = `{ "type" : "end_game", "winner" : "${name}", "points" : "${points}" }`;
+
+    wss.clients.forEach(function each(client) {
+        if (client.readyState == WebSocket.OPEN) {
+            client.send(message);
+        }
+    })
 }
