@@ -243,6 +243,12 @@
                 <h2 id="equation_eq"></h2>
             </div>
 
+            <div id="show_winner" style="display: none;">
+                <h1 id="winners">WINNER:</h1>
+                <h2 id="winner_name"></h2>
+                <h2 id="winner_points"></h2>
+            </div>
+
             <h1 id="round_title" style="display: none;">Round 1</h1>
         </div>
     </body>
@@ -554,6 +560,7 @@
         }
 
         function message_end_game(message) {
+            console.log("ending game...");
             if (clientName == 'HOST') {
                 doEndGame(message.winner, message.points);
             } else {
@@ -565,7 +572,37 @@
             hideNumbers();
             clearStartMenu();
             resetPlayersBackgrounds();
+            showWinner(winner, points);
+
+            roundNum = 0;
+            clearScores();
+
             startHost();
+        }
+
+        function clearScores() {
+            var playersDiv = document.getElementsByClassName("_players");
+            for(var i = 0; i < playersDiv.length; i++) {
+                var p = playersDiv[i].getElementsByTagName('h2')
+                p.innerHTML = "0";
+            }
+        }
+
+        function showWinner(winner, points) {
+            var winnerDiv = document.getElementById("show_winner");
+            var winnerPlayer = document.getElementById("winner_name");
+            var winnerPTs = document.getElementById("winner_points");
+
+            winnerPlayer.innerHTML = winner;
+            winnerPTs.innerHTML = points;
+
+            winnerDiv.style.display = "initial";
+            setTimeout(hideWinner, 10000)
+        }
+
+        function hideWinner() {
+            var winnerDiv = document.getElementById("show_winner");
+            winnerDiv.style.display = "none";
         }
 
         function updateTextArea(full_equation) {

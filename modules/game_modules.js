@@ -99,7 +99,7 @@ exports.startGame = function (playerCount, data, wss, ws) {
             var playerData = {
                 name: client.id,
                 first_points:0,
-                speed_points:0.0,
+                speed_points:0,
                 elim_points:30
             }
             playersData.push(playerData);
@@ -136,7 +136,7 @@ function doRound(wss) {
                 var playerData = {
                     name: client.id,
                     first_points:0,
-                    speed_points:0.0,
+                    speed_points:0,
                     elim_points:30
                 }
                 playersData.push(playerData);
@@ -181,7 +181,6 @@ exports.playerDone = function(data, wss, ws) {
     switch (_type) {
         case gameType.FIRST:
             addFirstPoints(wss, ws);
-            endRound(wss);
             break;
         case gameType.SPEED:
             addSpeedPoints(wss, ws);
@@ -222,26 +221,36 @@ function updatePointValues(wss, ws, data) {
 }
 
 function addFirstPoints(wss, ws) {
+    var endGame = false;
     playersData.forEach((player) => {
         if (player.name == ws.id) {
             player.first_points += 1;
             if(player.first_points == _rounds_to_win) {
                 gameEnd(wss, player.name, player.first_points);
+                endGame = true;
             }
         }
     })
-    endRound(wss);
+    if(!endGame) {
+        endRound(wss);
+    }
 }
 
 function addSpeedPoints(wss, ws) {
+    var endGame = false;
     playersData.forEach((player) => {
         if (player.name == ws.id) {
             player.speed_points += currentTime;
             if(player.speed_points >= _points_to_win) {
                 gameEnd(wss, player.name, player.speed_points);
+                endGame = true;
             }
         }
     })
+
+    if(!endGame) {
+        endRound(wss);
+    }
 }
 
 function doTick(wss) {
@@ -303,5 +312,15 @@ function gameEnd(wss, name, points) {
         if (client.readyState == WebSocket.OPEN) {
             client.send(message);
         }
+    })
+
+    clearScores();
+}
+
+function clearScores() {
+    playersData.forEach((player) => {
+        player.first_points = 0;
+        player.speed_points = 0;
+        player.elim_points = 30;
     })
 }
