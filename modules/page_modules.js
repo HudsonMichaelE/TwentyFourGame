@@ -22,10 +22,7 @@ exports.doLogin = function(data, wss, ws) {
 
         wss.clients.forEach(function each(client) {
             if (client != ws && client.readyState == WebSocket.OPEN) {
-                if (client.id == data) {
-                    console.log(`Login Attempt Failed: name ${data} already in use.`)
-                    loginSuccess = false;
-                }
+                loginSuccess = true;
                 if (client.id == 'HOST') hostExists = true
             }
         })
@@ -54,7 +51,8 @@ exports.doLogout = function(data, wss, ws) {
 
 function doPlayerJoin (data, wss, ws) {
     let player_join_message = `{ "type" : "player_join", "player_name" : "${data}"}`
-    players_list.push(data);
+    
+    if(players_list.indexOf(data) == -1) players_list.push(data);
 
     wss.clients.forEach(function each(client) {
         if (client != ws && client.readyState == WebSocket.OPEN) {

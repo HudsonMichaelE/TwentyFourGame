@@ -290,8 +290,10 @@
                     return;
                 }
 
-                let message = `{ "type" : "login", "name" : "${textBox.value}"}`;
-                ws.send(message);
+                if(textBox.value != '') {
+                    let message = `{ "type" : "login", "name" : "${textBox.value}"}`;
+                    ws.send(message);
+                }
             }
 
             hostButton.onclick = function() {
@@ -299,6 +301,11 @@
                     alert("failed to find ws");
                     return;
                 }
+
+                var song = new Audio('/audio/song.mp3');
+                song.loop = true;
+                song.volume = 0.6;
+                song.play();
 
                 let message = `{ "type" : "login", "name" : "HOST"}`;
                 ws.send(message);
